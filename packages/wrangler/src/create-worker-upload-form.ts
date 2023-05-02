@@ -48,6 +48,7 @@ export type WorkerMetadataBinding =
 	| { type: "queue"; name: string; queue_name: string }
 	| { type: "r2_bucket"; name: string; bucket_name: string }
 	| { type: "d1"; name: string; id: string; internalEnv?: string }
+	| { type: "constellation"; name: string; project: string }
 	| { type: "service"; name: string; service: string; environment?: string }
 	| { type: "analytics_engine"; name: string; dataset?: string }
 	| { type: "dispatch_namespace"; name: string; namespace: string }
@@ -160,6 +161,14 @@ export function createWorkerUploadForm(worker: CfWorkerInit): FormData {
 			});
 		}
 	);
+
+	bindings.constellation?.forEach(({ binding, project }) => {
+		metadataBindings.push({
+			name: binding,
+			type: "constellation",
+			project,
+		});
+	});
 
 	bindings.services?.forEach(({ binding, service, environment }) => {
 		metadataBindings.push({

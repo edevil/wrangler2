@@ -122,6 +122,7 @@ export async function bundleWorker(
 		serveAssetsFromWorker: boolean;
 		assets?: StaticAssetsConfig;
 		betaD1Shims?: string[];
+		betaConstellationShims?: string[];
 		doBindings: DurableObjectBindings;
 		jsxFactory?: string;
 		jsxFragment?: string;
@@ -154,6 +155,7 @@ export async function bundleWorker(
 		bundle = true,
 		serveAssetsFromWorker,
 		betaD1Shims,
+		betaConstellationShims,
 		doBindings,
 		jsxFactory,
 		jsxFragment,
@@ -311,6 +313,16 @@ export async function bundleWorker(
 					betaD1Shims,
 					local && !experimentalLocal,
 					doBindings
+				);
+			}),
+
+		Array.isArray(betaConstellationShims) &&
+			betaConstellationShims.length > 0 &&
+			((currentEntry: Entry) => {
+				return applyConstellationBetaFacade(
+					currentEntry,
+					tmpDir.path,
+					betaConstellationShims
 				);
 			}),
 
@@ -818,6 +830,45 @@ async function applyFirstPartyWorkerDevFacade(
 				__ENTRY_POINT__: entry.file,
 			}),
 		],
+		outfile: targetPath,
+	});
+
+	return {
+		...entry,
+		file: targetPath,
+	};
+}
+
+/**
+ * A middleware that injects the beta Constellation API in JS.
+ */
+async function applyConstellationBetaFacade(
+	entry: Entry,
+	tmpDirPath: string,
+	betaConstellationShims: string[]
+): Promise<Entry> {
+	const entrypointPath = path.resolve(
+		getBasePath(),
+		"templates/constellation-beta-facade.js"
+	);
+	const targetPath = path.join(
+		tmpDirPath,
+		"constellation-beta-facade.entry.js"
+	);
+	await esbuild.build({
+		entryPoints: [entrypointPath],
+		bundle: true,
+		format: "esm",
+		sourcemap: true,
+		plugins: [
+			esbuildAliasExternalPlugin({
+				__ENTRY_POINT__: entry.file,
+				"node:buffer": "node:buffer",
+			}),
+		],
+		define: {
+			__CONSTELLATION_IMPORTS__: JSON.stringify(betaConstellationShims),
+		},
 		outfile: targetPath,
 	});
 

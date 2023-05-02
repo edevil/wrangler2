@@ -2,7 +2,7 @@ import { access, lstat } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 import { bundleWorker } from "../../bundle";
 import { getBasePath } from "../../paths";
-import { D1_BETA_PREFIX } from "../../worker";
+import { CONSTELLATION_BETA_PREFIX, D1_BETA_PREFIX } from "../../worker";
 import { buildNotifierPlugin } from "./buildWorker";
 import type { Options as WorkerOptions } from "./buildWorker";
 
@@ -22,6 +22,7 @@ export function buildPlugin({
 	functionsDirectory,
 	local,
 	betaD1Shims,
+	betaConstellationShims,
 }: Options) {
 	return bundleWorker(
 		{
@@ -45,6 +46,9 @@ export function buildPlugin({
 			define: {},
 			betaD1Shims: (betaD1Shims || []).map(
 				(binding) => `${D1_BETA_PREFIX}${binding}`
+			),
+			betaConstellationShims: (betaConstellationShims || []).map(
+				(binding) => `${CONSTELLATION_BETA_PREFIX}${binding}`
 			),
 			doBindings: [], // Pages functions don't support internal Durable Objects
 			plugins: [

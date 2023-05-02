@@ -16,7 +16,10 @@ import * as metrics from "./metrics";
 import { getAssetPaths, getSiteAssetPaths } from "./sites";
 import { getAccountFromCache, loginOrRefreshIfRequired } from "./user";
 import { collectKeyValues } from "./utils/collectKeyValues";
-import { identifyD1BindingsAsBeta } from "./worker";
+import {
+	identifyConstellationBindingsAsBeta,
+	identifyD1BindingsAsBeta,
+} from "./worker";
 import { getHostFromRoute, getZoneForRoute, getZoneIdFromHost } from "./zones";
 import {
 	DEFAULT_INSPECTOR_PORT,
@@ -337,6 +340,7 @@ export type AdditionalDevProps = {
 	processEntrypoint?: boolean;
 	moduleRoot?: string;
 	rules?: Rule[];
+	constellation?: Environment["constellation"];
 };
 
 type StartDevOptions = DevArguments &
@@ -927,6 +931,10 @@ function getBindings(
 				};
 			}),
 			...(args.d1Databases || []),
+		]),
+		constellation: identifyConstellationBindingsAsBeta([
+			...(configParam.constellation ?? []),
+			...(args.constellation || []),
 		]),
 	};
 

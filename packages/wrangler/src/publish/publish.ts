@@ -22,7 +22,10 @@ import { getQueue, putConsumer } from "../queues/client";
 import { getWorkersDevSubdomain } from "../routes";
 import { syncAssets } from "../sites";
 import traverseModuleGraph from "../traverse-module-graph";
-import { identifyD1BindingsAsBeta } from "../worker";
+import {
+	identifyConstellationBindingsAsBeta,
+	identifyD1BindingsAsBeta,
+} from "../worker";
 import { getZoneForRoute } from "../zones";
 import type { FetchError } from "../cfetch";
 import type { Config } from "../config";
@@ -458,6 +461,21 @@ See https://developers.cloudflare.com/workers/platform/compatibility-dates for m
 			);
 		}
 
+		// If we are using Constellation bindings, and are not bundling the worker
+		// we should error here as the Constellation shim won't be added
+		const betaConstellationShims = identifyConstellationBindingsAsBeta(
+			config.constellation
+		);
+		if (
+			Array.isArray(betaConstellationShims) &&
+			betaConstellationShims.length > 0 &&
+			props.noBundle
+		) {
+			throw new Error(
+				"While in beta, you cannot use Constellation bindings without bundling your worker. Please remove `no_bundle` from your wrangler.toml file or remove the `--no-bundle` flag to access Constellation bindings."
+			);
+		}
+
 		const {
 			modules,
 			dependencies,
@@ -474,6 +492,9 @@ See https://developers.cloudflare.com/workers/platform/compatibility-dates for m
 						betaD1Shims: identifyD1BindingsAsBeta(config.d1_databases)?.map(
 							(db) => db.binding
 						),
+						betaConstellationShims: identifyConstellationBindingsAsBeta(
+							config.constellation
+						)?.map((proj) => proj.binding),
 						doBindings: config.durable_objects.bindings,
 						jsxFactory,
 						jsxFragment,
@@ -552,6 +573,7 @@ See https://developers.cloudflare.com/workers/platform/compatibility-dates for m
 			}),
 			r2_buckets: config.r2_buckets,
 			d1_databases: identifyD1BindingsAsBeta(config.d1_databases),
+			constellation: identifyConstellationBindingsAsBeta(config.constellation),
 			services: config.services,
 			analytics_engine_datasets: config.analytics_engine_datasets,
 			dispatch_namespaces: config.dispatch_namespaces,

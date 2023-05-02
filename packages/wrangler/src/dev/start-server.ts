@@ -210,6 +210,7 @@ async function runEsbuild({
 	rules,
 	assets,
 	betaD1Shims,
+	betaConstellationShims,
 	serveAssetsFromWorker,
 	tsconfig,
 	minify,
@@ -233,6 +234,7 @@ async function runEsbuild({
 	rules: Config["rules"];
 	assets: Config["assets"];
 	betaD1Shims?: string[];
+	betaConstellationShims?: string[];
 	define: Config["define"];
 	services: Config["services"];
 	serveAssetsFromWorker: boolean;
@@ -278,6 +280,7 @@ async function runEsbuild({
 				bypassCache: true,
 			},
 			betaD1Shims,
+			betaConstellationShims,
 			workerDefinitions,
 			services,
 			firstPartyWorkerDevFacade,
