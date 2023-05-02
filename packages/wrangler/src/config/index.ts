@@ -100,6 +100,7 @@ export function printBindings(bindings: CfWorkerInit["bindings"]) {
 		send_email,
 		queues,
 		d1_databases,
+		constellation,
 		r2_buckets,
 		logfwdr,
 		services,
@@ -204,6 +205,19 @@ export function printBindings(bindings: CfWorkerInit["bindings"]) {
 					};
 				}
 			),
+		});
+	}
+
+	if (constellation !== undefined && constellation.length > 0) {
+		output.push({
+			type: "Constellation Projects",
+			entries: constellation.map(({ binding, project }) => {
+				const projectValue = `${project}`;
+				return {
+					key: binding,
+					value: projectValue,
+				};
+			}),
 		});
 	}
 
