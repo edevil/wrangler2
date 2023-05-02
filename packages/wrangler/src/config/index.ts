@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { findUpSync } from "find-up";
 import { logger } from "../logger";
 import { parseJSONC, parseTOML, readFileSync } from "../parse";
-import { removeD1BetaPrefix } from "../worker";
+import { removeConstellationBetaPrefix, removeD1BetaPrefix } from "../worker";
 import { normalizeAndValidateConfig } from "./validation";
 import type { CfWorkerInit } from "../worker";
 import type { CommonYargsOptions } from "../yargs-types";
@@ -100,6 +100,7 @@ export function printBindings(bindings: CfWorkerInit["bindings"]) {
 		send_email,
 		queues,
 		d1_databases,
+		constellation,
 		r2_buckets,
 		logfwdr,
 		services,
@@ -204,6 +205,19 @@ export function printBindings(bindings: CfWorkerInit["bindings"]) {
 					};
 				}
 			),
+		});
+	}
+
+	if (constellation !== undefined && constellation.length > 0) {
+		output.push({
+			type: "Constellation Projects",
+			entries: constellation.map(({ binding, project }) => {
+				const projectValue = `${project}`;
+				return {
+					key: removeConstellationBetaPrefix(binding),
+					value: projectValue,
+				};
+			}),
 		});
 	}
 

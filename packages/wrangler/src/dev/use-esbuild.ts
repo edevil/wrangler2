@@ -35,6 +35,7 @@ export function useEsbuild({
 	legacyNodeCompat,
 	nodejsCompat,
 	betaD1Shims,
+	betaConstellationShims,
 	define,
 	noBundle,
 	workerDefinitions,
@@ -61,6 +62,7 @@ export function useEsbuild({
 	legacyNodeCompat: boolean | undefined;
 	nodejsCompat: boolean | undefined;
 	betaD1Shims?: string[];
+	betaConstellationShims?: string[];
 	noBundle: boolean;
 	workerDefinitions: WorkerRegistry;
 	durableObjects: Config["durable_objects"];
@@ -124,6 +126,7 @@ export function useEsbuild({
 					legacyNodeCompat,
 					nodejsCompat,
 					betaD1Shims,
+					betaConstellationShims,
 					doBindings: durableObjects.bindings,
 					define,
 					checkFetch: true,
@@ -203,6 +206,7 @@ export function useEsbuild({
 		workerDefinitions,
 		firstPartyWorkerDevFacade,
 		betaD1Shims,
+		betaConstellationShims,
 		local,
 		targetConsumer,
 		testScheduled,

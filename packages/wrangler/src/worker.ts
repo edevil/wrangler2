@@ -147,6 +147,16 @@ export interface CfD1Database {
 	migrations_dir?: string;
 }
 
+export const CONSTELLATION_BETA_PREFIX = `__CONSTELLATION_BETA__` as const;
+export type ConstellationPrefixedBinding =
+	`${typeof CONSTELLATION_BETA_PREFIX}${string}`;
+
+// TODO: figure out if this is duplicated in packages/wrangler/src/config/environment.ts
+export interface CfConstellation {
+	binding: ConstellationPrefixedBinding;
+	project: string;
+}
+
 interface CfService {
 	binding: string;
 	service: string;
@@ -233,6 +243,7 @@ export interface CfWorkerInit {
 		queues: CfQueue[] | undefined;
 		r2_buckets: CfR2Bucket[] | undefined;
 		d1_databases: CfD1Database[] | undefined;
+		constellation: CfConstellation[] | undefined;
 		services: CfService[] | undefined;
 		analytics_engine_datasets: CfAnalyticsEngineDataset[] | undefined;
 		dispatch_namespaces: CfDispatchNamespace[] | undefined;
@@ -271,4 +282,22 @@ export function identifyD1BindingsAsBeta(
 // Remove beta prefix
 export function removeD1BetaPrefix(binding: D1PrefixedBinding): string {
 	return binding.slice(D1_BETA_PREFIX.length);
+}
+
+// Prefix binding with identifier which will then get picked up by the Constellation shim.
+// Once the Constellation Api is out of beta, this function can be removed.
+export function identifyConstellationBindingsAsBeta(
+	projects: Environment["constellation"]
+): CfConstellation[] | undefined {
+	return projects?.map((proj) => ({
+		...proj,
+		binding: `${CONSTELLATION_BETA_PREFIX}${proj.binding}`,
+	}));
+}
+
+// Remove beta prefix
+export function removeConstellationBetaPrefix(
+	binding: ConstellationPrefixedBinding
+): string {
+	return binding.slice(CONSTELLATION_BETA_PREFIX.length);
 }
