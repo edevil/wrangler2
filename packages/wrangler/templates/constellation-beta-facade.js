@@ -1,7 +1,6 @@
 // src/shim.ts
 import worker, * as OTHER_EXPORTS from "__ENTRY_POINT__";
 export * from "__ENTRY_POINT__";
-import { Buffer } from "node:buffer";
 
 const TENSOR_TYPES = ["float32", "int32", "float64", "int64", "string", "bool"];
 
@@ -110,13 +109,13 @@ function float64toFloat32Array(float64Array) {
 }
 
 function b64ToArray(base64, type) {
-	const buffer = Buffer.from(base64, "base64");
-
-	const arrBuffer = new ArrayBuffer(buffer.length);
-	const fullView = new Uint8Array(arrBuffer);
-	for (let i = 0; i < buffer.length; i++) {
-		fullView[i] = buffer[i];
+	const byteString = atob(base64);
+	const bytes = new Uint8Array(byteString.length);
+	for (let i = 0; i < byteString.length; i++) {
+		bytes[i] = byteString.charCodeAt(i);
 	}
+	const arrBuffer = new DataView(bytes.buffer).buffer;
+
 	switch (type) {
 		case "float32":
 			// if (buffer.length % 4 != 0) {
@@ -135,7 +134,9 @@ function b64ToArray(base64, type) {
 }
 
 function arrayToB64(arr) {
-	return new Buffer.from(arr.buffer).toString("base64");
+	const byteArray = new Uint8Array(arr.buffer);
+	const base64String = btoa(String.fromCharCode(...byteArray));
+	return base64String;
 }
 
 function isConsnTensor(t) {
@@ -219,7 +220,6 @@ export class Tensor {
 			return {
 				type: this.type,
 				shape: this.shape,
-				value: null,
 				b64Value: this.b64Value,
 				name: this.name,
 			};
@@ -229,7 +229,6 @@ export class Tensor {
 				type: as32.type,
 				shape: this.shape,
 				value: Array.from(as32.value),
-				b64Value: null,
 				name: this.name,
 			};
 		}
@@ -241,7 +240,7 @@ var ConstellationApi = class {
 	constructor(binding) {
 		this.binding = binding;
 	}
-	async query(modelId, inputs) {
+	async query(modelId, inputs, outputs) {
 		if (isConsnTensor(inputs)) {
 			inputs = [inputs];
 		} else if (!Array.isArray(inputs)) {
@@ -260,14 +259,44 @@ var ConstellationApi = class {
 			}
 			inputs = inputArr;
 		}
+		if (outputs !== undefined && !Array.isArray(outputs)) {
+			outputs = [outputs];
+		}
 		var inputJSON = new Array(inputs.length);
 		for (let i = 0; i < inputs.length; i++) {
 			inputJSON[i] = inputs[i].toJSON(true);
 		}
 		const jsonBody = { model: modelId, input: inputJSON };
+		if (outputs !== undefined) {
+			jsonBody.output = outputs;
+		}
 		const body = JSON.stringify(jsonBody);
 
 		const res = await this.binding.fetch("/run", {
+			method: "POST",
+			body: body,
+			headers: {
+				"cf-consn-model-id": modelId,
+			},
+		});
+		if (!res.ok) {
+			throw new Error(`API returned ${res.status}: ${await res.text()}`);
+		}
+
+		const resp = await res.json();
+		const output = resp.result;
+		const decodedOut = {};
+		for (let i = 0; i < output.length; i++) {
+			let name = i.name ? i.name : i.toString();
+			decodedOut[name] = Tensor.fromJSON(output[i]);
+		}
+
+		return decodedOut;
+	}
+	async schema(modelId) {
+		const jsonBody = { model: modelId };
+		const body = JSON.stringify(jsonBody);
+		const res = await this.binding.fetch("/schema", {
 			method: "POST",
 			body: body,
 		});
@@ -275,14 +304,7 @@ var ConstellationApi = class {
 			throw new Error(`API returned ${res.status}: ${await res.text()}`);
 		}
 
-		const output = await res.json();
-		const decodedOut = {};
-		const outputKeys = Object.keys(output);
-		for (let i = 0; i < outputKeys.length; i++) {
-			decodedOut[outputKeys[i]] = Tensor.fromJSON(output[outputKeys[i]]);
-		}
-
-		return decodedOut;
+		return await res.json();
 	}
 };
 
