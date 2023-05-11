@@ -294,11 +294,11 @@ var ConstellationApi = class {
 		return decodedOut;
 	}
 	async schema(modelId) {
-		const jsonBody = { model: modelId };
-		const body = JSON.stringify(jsonBody);
 		const res = await this.binding.fetch("/schema", {
-			method: "POST",
-			body: body,
+			method: "GET",
+			headers: {
+				"cf-consn-model-id": modelId,
+			},
 		});
 		if (!res.ok) {
 			throw new Error(`API returned ${res.status}: ${await res.text()}`);
