@@ -266,7 +266,7 @@ var ConstellationApi = class {
 		for (let i = 0; i < inputs.length; i++) {
 			inputJSON[i] = inputs[i].toJSON(true);
 		}
-		const jsonBody = { model: modelId, input: inputJSON };
+		const jsonBody = { input: inputJSON };
 		if (outputs !== undefined) {
 			jsonBody.output = outputs;
 		}
@@ -287,8 +287,9 @@ var ConstellationApi = class {
 		const output = resp.result;
 		const decodedOut = {};
 		for (let i = 0; i < output.length; i++) {
-			let name = i.name ? i.name : i.toString();
-			decodedOut[name] = Tensor.fromJSON(output[i]);
+			const currOutput = output[i]
+			const name = currOutput.name ? currOutput.name : i.toString()
+			decodedOut[name] = Tensor.fromJSON(output[i])
 		}
 
 		return decodedOut;
